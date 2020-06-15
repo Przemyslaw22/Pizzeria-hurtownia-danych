@@ -1,0 +1,66 @@
+package main.Wykresy;
+
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.scene.chart.PieChart;
+import main.Connection.Polaczenie;
+import main.ModelTabela;
+
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.util.ArrayList;
+
+public class Napoje {
+
+    public static ObservableList konwertujNapoje(ObservableList data){
+
+
+        ArrayList lista = new ArrayList();
+
+        try {
+            Connection con = Polaczenie.connect();
+            ResultSet rs = con.createStatement().executeQuery("select count(z.id_produktu), p.nazwa from zamowienia_produkty z, produkty p where z.id_produktu = p.id_produktu and p.kategoria ='Napoje' group by z.id_produktu, p.nazwa order by z.id_produktu ASC;");
+            while (rs.next()){
+                lista.add(new PieChart.Data(
+                        rs.getString(2),
+                        rs.getDouble(1)
+                ));
+
+            }
+            con.close();
+        }catch (Exception e){
+            System.out.println(e);
+        }
+
+
+        ObservableList out = FXCollections.observableArrayList(lista);
+        return out;
+    }
+
+
+
+    public static ObservableList<ModelTabela> daneNapoje() {
+
+
+
+        ObservableList<ModelTabela> SpisNapoje = FXCollections.observableArrayList();
+
+        try {
+            Connection con = Polaczenie.connect();
+            ResultSet rs = con.createStatement().executeQuery("select count(z.id_produktu), p.nazwa from zamowienia_produkty z, produkty p where z.id_produktu = p.id_produktu and p.kategoria ='Napoje' group by z.id_produktu, p.nazwa order by z.id_produktu ASC;");
+            while (rs.next()){
+                SpisNapoje.add(new ModelTabela(
+                        rs.getString(1),
+                        rs.getString(2)
+                ));
+
+            }
+            con.close();
+        }catch (Exception e){
+            System.out.println(e);
+        }
+
+        return SpisNapoje;
+    }
+
+}
