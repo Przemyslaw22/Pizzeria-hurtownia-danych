@@ -69,7 +69,13 @@ public class WysSprzedazy {
 
         try {
             Connection con = Polaczenie.connect();
-            ResultSet rs = con.createStatement().executeQuery("select EXTRACT(MONTH from data), sum(d.cena) from dane_produktow d, zamowienia z, zamowienia_produkty x where z.id_zamowienia = x.id_zamowienia AND d.id_produktu = x.id_produktu AND EXTRACT(YEAR FROM z.data) = "+rok_Get+" group by EXTRACT(MONTH from data) order by EXTRACT(MONTH from data) ASC");
+            ResultSet rs = con.createStatement().executeQuery("select EXTRACT(MONTH from data), sum(d.cena) \n" +
+                    "from dane_produktow d, zamowienia z, zamowienia_produkty x \n" +
+                    "where z.id_zamowienia = x.id_zamowienia \n" +
+                    "AND d.id_produktu = x.id_produktu \n" +
+                    "AND EXTRACT(YEAR FROM z.data) = "+rok_Get+" \n" +
+                    "group by ROLLUP(EXTRACT(MONTH from data)) \n" +
+                    "order by EXTRACT(MONTH from data) ASC");
             while (rs.next()){
                 SpisWysSprzedazy.add(new ModelTabela(
                         rs.getString(1),

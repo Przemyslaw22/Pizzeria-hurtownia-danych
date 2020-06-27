@@ -19,7 +19,12 @@ public class Napoje {
 
         try {
             Connection con = Polaczenie.connect();
-            ResultSet rs = con.createStatement().executeQuery("select count(z.id_produktu), p.nazwa from zamowienia_produkty z, produkty p where z.id_produktu = p.id_produktu and p.kategoria ='Napoje' group by z.id_produktu, p.nazwa order by z.id_produktu ASC;");
+            ResultSet rs = con.createStatement().executeQuery("select count(z.id_produktu), p.nazwa \n" +
+                    "from zamowienia_produkty z, produkty p \n" +
+                    "where z.id_produktu = p.id_produktu \n" +
+                    "and p.kategoria ='Napoje' \n" +
+                    "group by z.id_produktu, p.nazwa \n" +
+                    "order by count(z.id_produktu) ASC");
             while (rs.next()){
                 lista.add(new PieChart.Data(
                         rs.getString(2),
@@ -47,7 +52,12 @@ public class Napoje {
 
         try {
             Connection con = Polaczenie.connect();
-            ResultSet rs = con.createStatement().executeQuery("select count(z.id_produktu), p.nazwa from zamowienia_produkty z, produkty p where z.id_produktu = p.id_produktu and p.kategoria ='Napoje' group by z.id_produktu, p.nazwa order by z.id_produktu ASC;");
+            ResultSet rs = con.createStatement().executeQuery("select count(z.id_produktu), p.nazwa \n" +
+                    "from zamowienia_produkty z, produkty p \n" +
+                    "where z.id_produktu = p.id_produktu \n" +
+                    "and p.kategoria ='Napoje' \n" +
+                    "group by z.id_produktu, p.nazwa \n" +
+                    "order by count(z.id_produktu) ASC");
             while (rs.next()){
                 SpisNapoje.add(new ModelTabela(
                         rs.getString(1),

@@ -2,6 +2,7 @@ package main.SQLdata;
 
 import weka.core.Instances;
 import weka.experiment.InstanceQuery;
+
 import java.io.File;
 
 public class SQLDataImporter {
@@ -17,8 +18,6 @@ public class SQLDataImporter {
         if (limit>0) query.setQuery(queryText + " limit "+ limit + ";");
         else query.setQuery(queryText + ";");
 
-        Instances data = query.retrieveInstances();
-
-        return data;
+        return query.retrieveInstances();
     }
 }

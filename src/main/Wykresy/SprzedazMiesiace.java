@@ -68,7 +68,11 @@ public class SprzedazMiesiace {
 
         try {
             Connection con = Polaczenie.connect();
-            ResultSet rs = con.createStatement().executeQuery("select EXTRACT(MONTH from data), count(id_zamowienia) from zamowienia where EXTRACT(YEAR from data) = "+rok_Get+" group by EXTRACT(MONTH from data) order by EXTRACT(MONTH from data) ASC");
+            ResultSet rs = con.createStatement().executeQuery("select EXTRACT(MONTH from data), count(id_zamowienia) \n" +
+                    "from zamowienia \n" +
+                    "where EXTRACT(YEAR from data) = "+rok_Get+" \n" +
+                    "group by ROLLUP(EXTRACT(MONTH from data)) \n" +
+                    "order by EXTRACT(MONTH from data) ASC");
             while (rs.next()){
                 SpisSprzedazMiesiace.add(new ModelTabela(
                         rs.getString(1),

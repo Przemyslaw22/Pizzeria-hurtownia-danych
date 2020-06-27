@@ -4,6 +4,7 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.scene.layout.Pane;
 import javafx.scene.chart.PieChart;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
@@ -13,12 +14,15 @@ import main.SQLdata.BasicTools;
 import main.SQLdata.SQLDataImporter;
 import main.Wykresy.*;
 import weka.associations.Apriori;
+import weka.associations.AssociationRule;
+import weka.associations.AssociationRules;
+import weka.associations.Item;
 import weka.core.Instances;
 import weka.core.Utils;
 
+import javax.swing.text.LabelView;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.ResourceBundle;
+import java.util.*;
 
 import static main.Wykresy.Dostawcy.konwertujDostawcy;
 import static main.Wykresy.Jedzenie.konwertujJedzenie;
@@ -46,7 +50,23 @@ public class Controller implements Initializable {
     @FXML
     public Button generuj_miejscowosci;
     @FXML
-    public TextArea associationData;
+    public Button dane_regul;
+    @FXML
+    public Pane panel_glowny;
+    @FXML
+    public TextField minRules;
+    @FXML
+    public TextField minSupp;
+    @FXML
+    public TextField minMetric;
+    @FXML
+    public Label srodek_tekst;
+    @FXML
+    public TextArea reguly_area;
+    @FXML
+    public LabelView kolumny;
+
+
 
     String rok;
 
@@ -58,44 +78,79 @@ public class Controller implements Initializable {
         generuj_miejscowosci.setVisible(false);
     }
 
-    @Override
-    public void initialize(URL url, ResourceBundle rb) {
+    public void przygotuj_glowna(){
+        minMetric.setVisible(false);
+        minSupp.setVisible(false);
+        minRules.setVisible(false);
+        dane_regul.setVisible(false);
+        reguly_area.setVisible(false);
+        srodek_tekst.setText("Wykres");
+        srodek_tekst.setLayoutX(620.0);
+        table.setVisible(true);
+        wykres.setVisible(true);
 
-        double minSupp = 0.2;
-        double minRules = 1;
-        double minMetric = 0.05;
+    }
 
+    public void przygotuj_reguly(){
+        minMetric.setVisible(true);
+        minSupp.setVisible(true);
+        minRules.setVisible(true);
+        dane_regul.setVisible(true);
+        reguly_area.setVisible(true);
+        table.setVisible(false);
+        srodek_tekst.setText("Reguły");
+        srodek_tekst.setLayoutX(750.0);
+        wykres.setVisible(false);
+    }
+
+    public void przeladuj(){
         try {
-            String username = "postgres";
-            String password = "";
-
-            String query =
-                    "SELECT STRING_AGG(p.nazwa, ', ')\n" +
-                            "FROM produkty p\n" +
-                            "JOIN zamowienia_produkty zp ON p.ID_produktu = zp.ID_produktu\n" +
-                            "JOIN zamowienia zam ON zp.ID_zamowienia = zam.ID_zamowienia\n" +
-                            "GROUP BY p.nazwa\n" +
-                            "ORDER BY p.nazwa";
-
-            Instances data = SQLDataImporter.getDataSetFromPostgreSQL(username, password, query, 0);
-            String fileName = "./src/main/data/Apriori.arff";
-            BasicTools.saveData(data, fileName);
-            BasicTools.processToApriori(data);
-            data = BasicTools.loadData(fileName);
+            BasicTools.processToApriori();
+            String fileName = "./src/main/data/Apriori.arff"; //Lokalizacja pliku z danymi
+            Instances data = BasicTools.loadData(fileName);
             data.setClassIndex(data.numAttributes() - 1);
 
-            String[] options = Utils.splitOptions("-N 1 -C 0.2 -M 0.05");
+            String s = "-N ";
+            StringBuilder sB = new StringBuilder(s);
+
+            if (minRules.getText().isEmpty()) {
+                sB.append(5);
+            }else {
+                sB.append(minRules.getText());
+            }
+            sB.append(" -C ");
+            if (minSupp.getText().isEmpty()) {
+                sB.append(0.2);
+            }else {
+                sB.append(minSupp.getText());
+            }
+            sB.append(" -M ");
+            if (minMetric.getText().isEmpty()) {
+                sB.append(0.01);
+            }else {
+                sB.append(minMetric.getText());
+            }
+
+
+            String[] options = Utils.splitOptions(sB.toString());
             Apriori apriori = new Apriori();
             apriori.setOptions(options);
             apriori.buildAssociations(data);
 
-
-
+            reguly_area.setText(apriori.toString());
             System.out.println(apriori.toString());
-            associationData.setText(apriori.toString());
+
+
         } catch (Exception e) {
-            System.out.println("ERROR: " + e.getMessage());
+            e.printStackTrace();
         }
+
+    }
+
+    @Override
+    public void initialize(URL url, ResourceBundle rb) {
+        przygotuj_glowna();
+
     }
 
 
@@ -111,7 +166,7 @@ public class Controller implements Initializable {
         kol_1.setText("Kolumna 1");
         kol_2.setCellValueFactory(new PropertyValueFactory<>("Nazwa2"));
         kol_2.setText("Kolumna 2");
-
+        przygotuj_glowna();
         table.setItems(null);
 
     }
@@ -122,7 +177,7 @@ public class Controller implements Initializable {
         kol_1.setText("Ilość");
         kol_2.setCellValueFactory(new PropertyValueFactory<>("Nazwa2"));
         kol_2.setText("Nazwa");
-
+        przygotuj_glowna();
         table.setItems(Jedzenie.daneJedzenie());
     }
     public void wypelnijNapoje(){
@@ -131,7 +186,7 @@ public class Controller implements Initializable {
         kol_1.setText("Ilość");
         kol_2.setCellValueFactory(new PropertyValueFactory<>("Nazwa2"));
         kol_2.setText("Nazwa");
-
+        przygotuj_glowna();
         table.setItems(Napoje.daneNapoje());
     }
 
@@ -141,7 +196,7 @@ public class Controller implements Initializable {
         kol_1.setText("Nazwisko");
         kol_2.setCellValueFactory(new PropertyValueFactory<>("Nazwa2"));
         kol_2.setText("Ilość");
-
+        przygotuj_glowna();
         table.setItems(Kelnerzy.daneKelnerzy());
     }
     public void wypelnijDostawcy(){
@@ -150,7 +205,7 @@ public class Controller implements Initializable {
         kol_1.setText("Nazwisko");
         kol_2.setCellValueFactory(new PropertyValueFactory<>("Nazwa2"));
         kol_2.setText("Ilość");
-
+        przygotuj_glowna();
         table.setItems(Dostawcy.daneDostawcy());
     }
     public void wypelnijSprzedazMiesiace(){
@@ -159,7 +214,7 @@ public class Controller implements Initializable {
         kol_1.setText("Miesiąc");
         kol_2.setCellValueFactory(new PropertyValueFactory<>("Nazwa2"));
         kol_2.setText("Ilość");
-
+        przygotuj_glowna();
         table.setItems(SprzedazMiesiace.daneSprzedazMiesiace());
     }
     public void wypelnijWysSprzedazy(){
@@ -168,6 +223,7 @@ public class Controller implements Initializable {
         kol_1.setText("Miesiąc");
         kol_2.setCellValueFactory(new PropertyValueFactory<>("Nazwa2"));
         kol_2.setText("Suma");
+        przygotuj_glowna();
         table.setItems(WysSprzedazy.daneWysSprzedazy());
     }
     public void wypelnijMiejscowosci(){
@@ -176,7 +232,7 @@ public class Controller implements Initializable {
         kol_1.setText("Rok");
         kol_2.setCellValueFactory(new PropertyValueFactory<>("Nazwa2"));
         kol_2.setText("Suma");
-
+        przygotuj_glowna();
         table.setItems(Miejscowosci.daneMiejscowosci());
     }
 
@@ -186,6 +242,18 @@ public class Controller implements Initializable {
      *
      */
 
+    public void handleRegulyModulBTAction(MouseEvent mouseEvent) {
+
+        wyczysc();
+        wykres.setVisible(false);
+        reguly_area.setEditable(false);
+        przygotuj_reguly();
+
+    }
+
+    public void handleGenerujRegulyBTAction(MouseEvent mouseEvent) {
+        przeladuj();
+    }
 
     public void handleJedzenieBTAction(MouseEvent mouseEvent) {
         wypelnijJedzenie();
@@ -260,11 +328,7 @@ public class Controller implements Initializable {
         wykres.dataProperty().set(Wyczysc.konwertujWyczysc(oblist));
     }
 
-    public void handleRegulyModulBTAction(MouseEvent mouseEvent) {
-        wyczysc();
-        oblist.clear();
-        wykres.dataProperty().set(Wyczysc.konwertujWyczysc(oblist));
-    }
+
 
 
 }

@@ -1,14 +1,17 @@
 package main.SQLdata;
 
+
 import weka.core.Instances;
 import weka.core.converters.ArffLoader;
 import weka.core.converters.ArffSaver;
 import weka.core.converters.CSVLoader;
+
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
-
+import java.util.Scanner;
 
 public class BasicTools {
 
@@ -32,53 +35,38 @@ public class BasicTools {
         saver.writeBatch();
     }
 
-    static public void processToApriori(Instances data) throws Exception {
-        String username = "postgres";
-        String password = "";
-        String query = "SELECT nazwa FROM produkty";
+        public static void processToApriori() throws FileNotFoundException {
 
-        Instances uslugi = SQLDataImporter.getDataSetFromPostgreSQL(username, password, query, 0);
 
-        ArrayList<String> services = new ArrayList<String>(uslugi.size());
-        for (int i = 0; i < uslugi.size(); i++)  {
-            services.add(uslugi.get(i).toString().replace("'", ""));
-        }
-
-        ArrayList<String> dataOut = new ArrayList<String>();
-
-        for (int i = 0; i < data.size(); i++) {
-
-            String s = "";
-            StringBuilder sB = new StringBuilder(s);
-
-            for (int j = 0; j < services.size(); j++) {
-                if (data.get(i).toString().contains(services.get(j)))
-                    sB.append("t,");
-                else if (j == services.size() - 1)
-                    sB.append("?");
-                else
-                    sB.append("?,");
-            }
-
-            if (sB.length() == 22)   sB.deleteCharAt(sB.length() - 1);
-
-            s = sB.toString();
-            dataOut.add(s);
-
-        }
         String filename = "./src/main/data/Apriori.arff";
         PrintWriter out = new PrintWriter(filename);
-        out.println("@relation produkty");
+        out.println("@relation Apriori");
         out.println();
-        for (int i = 0; i < services.size(); i++) {
-            out.println("@attribute '" + services.get(i) + "' {t}");
-        }
+        out.println("@attribute 'produkt1' {Umberto,Romana,Hawajska,Czekoladowa,Meksykańska,Feta,Neapolitana,Kebab,Margherita,Vesuvio,Primavera,Vegetariana,Diablo,Frytki,Carbonara,Hamburger,Zapiekanka,Tortilla,Cola,Sprite,Mirinda,Woda,Piwo,RedBull,Sok}");
+        out.println();
+        out.println("@attribute 'produkt2' {?,Umberto,Romana,Hawajska,Czekoladowa,Meksykańska,Feta,Neapolitana,Kebab,Margherita,Vesuvio,Primavera,Vegetariana,Diablo,Frytki,Carbonara,Hamburger,Zapiekanka,Tortilla,Cola,Sprite,Mirinda,Woda,Piwo,RedBull,Sok}\n");
         out.println();
         out.println("@data");
-        for (int i = 0; i < dataOut.size(); i++) {
-            out.println(dataOut.get(i));
-        }
-        out.close();
+            File id = new File("src/main/data/id.txt");
+            File produkty = new File("src/main/data/produkty.txt");
+            Scanner odczyt_id = new Scanner(id);
+            Scanner odczyt_produkty = new Scanner(produkty);
+            int linijka1;
+            int x;
+            String linijka2 = "";
 
+
+            for(int i=0; i<165; i++) {
+                linijka1 = odczyt_id.nextInt();
+                x = odczyt_id.nextInt();
+                linijka2 = odczyt_produkty.nextLine();
+                if(linijka1 == x){
+                    out.println(linijka2 + "," + odczyt_produkty.nextLine());
+                }else{
+                    out.println(linijka2 + ",?");
+                }
+
+            }
+        out.close();
     }
 }
