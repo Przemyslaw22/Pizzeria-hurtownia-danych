@@ -1,0 +1,61 @@
+#!/bin/bash
+if [ `pwd` != "/var/www/html" ]; 
+#if [ `pwd` != "/diskshared" ];
+then 
+echo "exit"
+exit 1
+fi
+
+kopia_z=`echo $1 | rev | cut -c 2- | rev`
+kopia_do=`echo $2 | rev | cut -c 2- | rev`
+kopia_z_conf=$kopia_z/src/config/config.php
+kopia_do_conf=$kopia_do/src/config/config.php
+conf_path2=$kopia_do/src/config/config_$kopia_do.php
+
+
+read -r -p "Na pewno skopiowac zawartosc ${kopia_z} do ${kopia_do}? [y/n] " response
+case "$response" in
+    [nN]) 
+        exit 1
+        ;;
+    [Yy])
+
+
+echo "dump bazy ${kopia_z}"
+if [ -f ${kopia_z_conf} ] ; then
+host=$(grep DB $kopia_z_conf |head -1|cut -d "=" -f3|cut -d "'" -f1)
+dbname=$(grep DB $kopia_z_conf |head -1|cut -d "=" -f2|cut -d ";" -f1)
+dbuser=$(grep DB_USER $kopia_z_conf |cut -d "'" -f4)
+dbpass=$(grep DB_PASS $kopia_z_conf |cut -d "'" -f4)
+dump_filename=dump-$dbname.sql
+cd $kopia_z/ && mysqldump --single-transaction -u"${dbuser}" "${dbname}" -h"${host}" -p"${dbpass}" > $dump_filename && cd ..
+#echo $dbname $dbuser $dbpass $dump_filename
+else
+exit 1
+fi
+
+echo "kopiowanie configu z ${kopia_do} do /configs..."
+mv $kopia_do_conf $conf_path2
+cp -f $conf_path2 configs/
+
+echo "usuwanie plikow z ${kopia_do} i kopiowanie plikow z ${kopia_z}..."
+cd $kopia_do/ && rm -rf * && cd ..
+cd $kopia_z/ && cp -r * ../$kopia_do/ && cd ..
+cp -f configs/config_$kopia_do.php $kopia_do/src/config/
+mv $kopia_do/src/config/config_$kopia_do.php $kopia_do/src/config/config.php
+
+echo "wgrywanie dump do bazy ${kopia_do}"
+if [ -f ${kopia_do_conf} ] ; then
+host=$(grep DB $kopia_do_conf |head -1|cut -d "=" -f3|cut -d "'" -f1)
+dbname=$(grep DB $kopia_do_conf |head -1|cut -d "=" -f2|cut -d ";" -f1)
+dbuser=$(grep DB_USER $kopia_do_conf |cut -d "'" -f4)
+dbpass=$(grep DB_PASS $kopia_do_conf |cut -d "'" -f4)
+
+cd $kopia_do/ && mysql -u${dbuser} -D ${dbname} -h${host} -p${dbpass} < $dump_filename && cd ..
+#echo $dbname $dbuser $dbpass $dump_filename
+else
+exit 1
+fi
+echo "wgrywanie kopii zakonczone"
+        ;;
+esac
