@@ -1,0 +1,22 @@
+name: Mixeway Scanner SAST
+
+on: push
+
+jobs:
+  mixeway-scan:
+    name: SAST testing
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - name: Prepare variables
+        id: vars
+        shell: bash
+        run: |
+          echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
+          echo "::set-output name=sha_short::$(git rev-parse HEAD)"
+      - name: Prepare Mixeway docker image
+        run: |
+          docker pull mixeway/scanner:latest
+      - name: Run Scan
+        run: |
+          docker run -e MODE=STANDALONE -e OSS_USERNAME=${{ secrets.oss_username }} -e OSS_KEY=${{ secrets.oss_key }} -e COMMIT_ID=${{ steps.vars.outputs.sha_short }} -e BRANCH=${{ steps.vars.outputs.branch }} -v $PWD:/opt/sources mixeway/scanner:latest
